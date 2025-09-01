@@ -58,3 +58,9 @@ config.local.json
 
 # Docker
 .dockerignore
+
+# Documentation files (not needed in git)
+project-models.md
+project-path.md
+readme.md
+
