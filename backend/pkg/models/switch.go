@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // Switch represents a network switch device
@@ -26,6 +28,8 @@ type Switch struct {
 	IOSVersion string    `json:"ios_version"`
 
 	// todo: ilişkiler eklenecek (örneğin, VLAN'lar, portlar, backups, alerts)
+	Ports []Port `json:"ports" gorm:"foreignKey:SwitchID"`
+	VLANS []VLAN `json:"vlans" gorm:"foreignKey:SwitchID"`
 
 	// Zaman Damgaları
 	CreatedAt time.Time `json:"created_at"`
@@ -38,14 +42,14 @@ func (Switch) TableName() string {
 }
 
 // BeforeCreate GORM hook
-func (s *Switch) BeforeCreate() error {
+func (s *Switch) BeforeCreate(tx *gorm.DB) error {
 	s.CreatedAt = time.Now()
 	s.UpdatedAt = time.Now()
 	return nil
 }
 
 // BeforeUpdate GORM hook
-func (s *Switch) BeforeUpdate() error {
+func (s *Switch) BeforeUpdate(tx *gorm.DB) error {
 	s.UpdatedAt = time.Now()
 	return nil
 }
