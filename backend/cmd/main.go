@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"switch-manager/internal/api/handler"
 	"switch-manager/internal/api/repository"
@@ -35,7 +36,7 @@ func main() {
 	defer database.Close()
 
 	// Veritabanı migration'ını çalıştır
-	if err = database.AutoMigrate(&models.Switch{}); err != nil {
+	if err = database.AutoMigrate(&models.Switch{}, &models.Port{}, models.VLAN{}); err != nil {
 		logger.Fatal("Veritabanı migration hatası:", err)
 	}
 	logger.Info("Veritabanı migration tamamlandı")
@@ -50,21 +51,16 @@ func main() {
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			// Custom error handling
 			if appErr, ok := err.(*errorx.AppError); ok {
-				return c.Status(appErr.Code).JSON(fiber.Map{
-					"error": appErr.Message,
-					"code":  appErr.Code,
-				})
+				return errorx.WrapErr(appErr, err)
 			}
 
 			// Default Fiber error handling
 			code := fiber.StatusInternalServerError
-			if e, ok := err.(*fiber.Error); ok {
+			var e *fiber.Error
+			if errors.As(err, &e) {
 				code = e.Code
 			}
-			return c.Status(code).JSON(fiber.Map{
-				"error": err.Error(),
-				"code":  code,
-			})
+			return errorx.New(code, "Internal Server Error", err)
 		},
 	})
 
@@ -82,7 +78,7 @@ func main() {
 
 	// HTTP sunucusunu başlat
 	logger.Info("HTTP sunucusu başlatılıyor... port:", cfg.Server.Port)
-	if err := app.Listen(":" + cfg.Server.Port); err != nil {
+	if err = app.Listen(":" + cfg.Server.Port); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -98,6 +94,10 @@ func setupRoutes(app *fiber.App, db *database.DB) {
 	switchService := service.NewSwitchService(switchRepo)
 	switchHandler := handler.NewSwitchHandler(switchService)
 
+	portRepo := repository.NewPortRepository(db)
+	portService := service.NewPortService(portRepo)
+	portHandler := handler.NewPortHandler(portService)
+
 	// API v1
 	api := app.Group("/api/v1")
 	{
@@ -111,9 +111,13 @@ func setupRoutes(app *fiber.App, db *database.DB) {
 		switches.Patch("/:id/status", switchHandler.UpdateSwitchStatus)
 
 		// Port yönetimi (placeholder)
-		api.Get("/ports", func(c *fiber.Ctx) error {
-			return c.JSON(fiber.Map{"message": "Port listesi gelecek"})
-		})
+		ports := api.Group("/ports")
+		ports.Get("/", portHandler.GetAllPortes)
+		ports.Post("/", portHandler.CreatePort)
+		ports.Get("/:id", portHandler.GetPort)
+		ports.Put("/:id", portHandler.UpdatePort)                // Implement if needed
+		ports.Delete("/:id", portHandler.DeletePort)             // Implement if needed
+		ports.Patch("/:id/status", portHandler.UpdatePortStatus) // Implement if needed
 
 		// VLAN yönetimi (placeholder)
 		api.Get("/vlans", func(c *fiber.Ctx) error {
