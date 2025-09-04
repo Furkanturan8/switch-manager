@@ -1,9 +1,10 @@
 package config
 
 import (
-	"encoding/json"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -39,7 +40,11 @@ type LogConfig struct {
 }
 
 func Load() (*Config, error) {
-	// Varsayılan konfigürasyon
+	// .env dosyasını yükle
+	if err := godotenv.Load(); err != nil {
+		return nil, err
+	}
+	// Konfigürasyonu oluştur
 	config := &Config{
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8080"),
@@ -64,34 +69,28 @@ func Load() (*Config, error) {
 		},
 	}
 
-	// Konfigürasyon dosyası varsa yükle
-	if _, err := os.Stat("config.json"); err == nil {
-		file, err := os.Open("config.json")
-		if err != nil {
-			return nil, err
-		}
-		defer file.Close()
-
-		if err := json.NewDecoder(file).Decode(config); err != nil {
-			return nil, err
-		}
-	}
-
 	return config, nil
 }
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
+func getEnv(key string, defaultVal string) string {
+	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
-	return defaultValue
+	return defaultVal
 }
 
-func getEnvAsInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
+func getEnvAsInt(key string, defaultVal int) int {
+	valueStr := getEnv(key, "")
+	if value, err := strconv.Atoi(valueStr); err == nil {
+		return value
 	}
-	return defaultValue
+	return defaultVal
+}
+
+func getEnvAsBool(key string, defaultVal bool) bool {
+	valueStr := getEnv(key, "")
+	if value, err := strconv.ParseBool(valueStr); err == nil {
+		return value
+	}
+	return defaultVal
 }
