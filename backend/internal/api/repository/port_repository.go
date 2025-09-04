@@ -1,27 +1,37 @@
 package repository
 
 import (
+	"context"
 	"switch-manager/internal/models"
 	"switch-manager/pkg/database"
 )
+
+type IPortRepository interface {
+	Create(ctx context.Context, port_ *models.Port) error
+	GetByID(ctx context.Context, id uint) (*models.Port, error)
+	GetByName(ctx context.Context, name string) (*models.Port, error)
+	GetAll(ctx context.Context) ([]models.Port, error)
+	Update(ctx context.Context, port_ *models.Port) error
+	Delete(ctx context.Context, id uint) error
+}
 
 type PortRepository struct {
 	db *database.DB
 }
 
-func NewPortRepository(db *database.DB) *PortRepository {
+func NewPortRepository(db *database.DB) IPortRepository {
 	return &PortRepository{db: db}
 }
 
 // Create creates a new port
-func (r *PortRepository) Create(port_ *models.Port) error {
-	return r.db.Create(port_).Error
+func (r *PortRepository) Create(ctx context.Context, port_ *models.Port) error {
+	return r.db.WithContext(ctx).Create(port_).Error
 }
 
 // GetByID retrieves a port by ID
-func (r *PortRepository) GetByID(id uint) (*models.Port, error) {
+func (r *PortRepository) GetByID(ctx context.Context, id uint) (*models.Port, error) {
 	var port_ models.Port
-	err := r.db.Preload("Switch").First(&port_, id).Error
+	err := r.db.WithContext(ctx).Preload("Switch").First(&port_, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -29,9 +39,9 @@ func (r *PortRepository) GetByID(id uint) (*models.Port, error) {
 }
 
 // GetByName retrieves a port by name
-func (r *PortRepository) GetByName(name string) (*models.Port, error) {
+func (r *PortRepository) GetByName(ctx context.Context, name string) (*models.Port, error) {
 	var port_ models.Port
-	err := r.db.Where("name = ?", name).First(&port_).Error
+	err := r.db.WithContext(ctx).Where("name = ?", name).First(&port_).Error
 	if err != nil {
 		return nil, err
 	}
@@ -39,18 +49,18 @@ func (r *PortRepository) GetByName(name string) (*models.Port, error) {
 }
 
 // GetAll retrieves all ports
-func (r *PortRepository) GetAll() ([]models.Port, error) {
+func (r *PortRepository) GetAll(ctx context.Context) ([]models.Port, error) {
 	var ports []models.Port
-	err := r.db.Preload("Switch").Find(&ports).Error
+	err := r.db.WithContext(ctx).Preload("Switch").Find(&ports).Error
 	return ports, err
 }
 
 // Update updates a port
-func (r *PortRepository) Update(port_ *models.Port) error {
-	return r.db.Save(port_).Error
+func (r *PortRepository) Update(ctx context.Context, port_ *models.Port) error {
+	return r.db.WithContext(ctx).Save(port_).Error
 }
 
 // Delete deletes a port by ID
-func (r *PortRepository) Delete(id uint) error {
-	return r.db.Delete(&models.Port{}, id).Error
+func (r *PortRepository) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&models.Port{}, id).Error
 }

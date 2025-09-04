@@ -26,7 +26,7 @@ func (h *SwitchHandler) CreateSwitch(c *fiber.Ctx) error {
 	}
 
 	switch_ := req.ToModel()
-	if err := h.service.CreateSwitch(switch_); err != nil {
+	if err := h.service.CreateSwitch(c.Context(), switch_); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
@@ -41,7 +41,7 @@ func (h *SwitchHandler) GetSwitch(c *fiber.Ctx) error {
 		return errorx.WrapMsg(errorx.ErrInvalidRequest, "Invalid switch ID")
 	}
 
-	switch_, err := h.service.GetSwitch(uint(id))
+	switch_, err := h.service.GetSwitch(c.Context(), uint(id))
 	if err != nil {
 		return errorx.WrapMsg(errorx.ErrNotFound, "Switch not found")
 	}
@@ -52,7 +52,7 @@ func (h *SwitchHandler) GetSwitch(c *fiber.Ctx) error {
 
 // GetAllSwitches handles getting all switches
 func (h *SwitchHandler) GetAllSwitches(c *fiber.Ctx) error {
-	switches, err := h.service.GetAllSwitches()
+	switches, err := h.service.GetAllSwitches(c.Context())
 	if err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
@@ -72,7 +72,7 @@ func (h *SwitchHandler) UpdateSwitch(c *fiber.Ctx) error {
 	}
 
 	// Önce mevcut switch'i getir
-	switch_, err := h.service.GetSwitch(uint(id))
+	switch_, err := h.service.GetSwitch(c.Context(), uint(id))
 	if err != nil {
 		return errorx.WrapMsg(errorx.ErrNotFound, "Switch not found")
 	}
@@ -84,7 +84,7 @@ func (h *SwitchHandler) UpdateSwitch(c *fiber.Ctx) error {
 
 	// Sadece gönderilen alanları güncelle
 	req.ToModel(switch_)
-	if err = h.service.UpdateSwitch(switch_); err != nil {
+	if err = h.service.UpdateSwitch(c.Context(), switch_); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
@@ -99,7 +99,7 @@ func (h *SwitchHandler) DeleteSwitch(c *fiber.Ctx) error {
 		return errorx.WrapMsg(errorx.ErrInvalidRequest, "Invalid switch ID")
 	}
 
-	if err = h.service.DeleteSwitch(uint(id)); err != nil {
+	if err = h.service.DeleteSwitch(c.Context(), uint(id)); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 

@@ -98,6 +98,10 @@ func setupRoutes(app *fiber.App, db *database.DB) {
 	portService := service.NewPortService(portRepo)
 	portHandler := handler.NewPortHandler(portService)
 
+	vlanRepo := repository.NewVLANRepository(db)
+	vlanService := service.NewVLANService(vlanRepo)
+	vlanHandler := handler.NewVLANHandler(vlanService)
+
 	// API v1
 	api := app.Group("/api/v1")
 	{
@@ -109,7 +113,7 @@ func setupRoutes(app *fiber.App, db *database.DB) {
 		switches.Put("/:id", switchHandler.UpdateSwitch)
 		switches.Delete("/:id", switchHandler.DeleteSwitch)
 
-		// Port yönetimi (placeholder)
+		// Port yönetimi
 		ports := api.Group("/ports")
 		ports.Get("/", portHandler.GetAllPortes)
 		ports.Post("/", portHandler.CreatePort)
@@ -117,9 +121,12 @@ func setupRoutes(app *fiber.App, db *database.DB) {
 		ports.Put("/:id", portHandler.UpdatePort)
 		ports.Delete("/:id", portHandler.DeletePort)
 
-		// VLAN yönetimi (placeholder)
-		api.Get("/vlans", func(c *fiber.Ctx) error {
-			return c.JSON(fiber.Map{"message": "VLAN listesi gelecek"})
-		})
+		// VLAN yönetimi
+		vlans := api.Group("/vlans")
+		vlans.Get("/", vlanHandler.GetAllVLANs)
+		vlans.Post("/", vlanHandler.CreateVLAN)
+		vlans.Get("/:id", vlanHandler.GetVLAN)
+		vlans.Put("/:id", vlanHandler.UpdateVLAN)
+		vlans.Delete("/:id", vlanHandler.DeleteVLAN)
 	}
 }

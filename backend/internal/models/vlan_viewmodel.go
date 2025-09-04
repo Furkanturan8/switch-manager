@@ -22,10 +22,6 @@ type VLANUpdateRequest struct {
 	MTU         int    `json:"mtu" validate:"omitempty,min=64,max=9216"`
 	STPEnabled  *bool  `json:"stp_enabled,omitempty"`
 	Priority    int    `json:"priority" validate:"omitempty,min=0,max=65535"`
-}
-
-// VLANStatusUpdateRequest - VLAN durum güncelleme isteği
-type VLANStatusUpdateRequest struct {
 	AdminStatus string `json:"admin_status" validate:"required,oneof=enabled disabled"`
 	Status      string `json:"status" validate:"required,oneof=active suspended"`
 }
@@ -110,21 +106,13 @@ func (req *VLANCreateRequest) ToModel() *VLAN {
 
 // ToModel - Update request'i mevcut model'e uygula
 func (req *VLANUpdateRequest) ToModel(existing *VLAN) {
-	if req.Name != "" {
-		existing.Name = req.Name
-	}
-	if req.Description != "" {
-		existing.Description = req.Description
-	}
-	if req.MTU != 0 {
-		existing.MTU = req.MTU
-	}
-	if req.STPEnabled != nil {
-		existing.STPEnabled = *req.STPEnabled
-	}
-	if req.Priority != 0 {
-		existing.Priority = req.Priority
-	}
+	existing.Name = req.Name
+	existing.Description = req.Description
+	existing.MTU = req.MTU
+	existing.STPEnabled = *req.STPEnabled
+	existing.Priority = req.Priority
+	existing.AdminStatus = req.AdminStatus
+	existing.Status = req.Status
 }
 
 // FromModel - Model'den response'a dönüştür

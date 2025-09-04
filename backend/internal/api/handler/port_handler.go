@@ -24,7 +24,7 @@ func (h *PortHandler) CreatePort(c *fiber.Ctx) error {
 	}
 
 	port_ := req.ToModel()
-	if err := h.service.CreatePort(port_); err != nil {
+	if err := h.service.CreatePort(c.Context(), port_); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
@@ -39,7 +39,7 @@ func (h *PortHandler) GetPort(c *fiber.Ctx) error {
 		return errorx.WrapMsg(errorx.ErrInvalidRequest, "Invalid port ID")
 	}
 
-	port_, err := h.service.GetPort(uint(id))
+	port_, err := h.service.GetPort(c.Context(), uint(id))
 	if err != nil {
 		return errorx.WrapMsg(errorx.ErrNotFound, "Port not found")
 	}
@@ -50,7 +50,7 @@ func (h *PortHandler) GetPort(c *fiber.Ctx) error {
 
 // GetAllPortes handles getting all ports
 func (h *PortHandler) GetAllPortes(c *fiber.Ctx) error {
-	ports, err := h.service.GetAllPorts()
+	ports, err := h.service.GetAllPorts(c.Context())
 	if err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
@@ -70,7 +70,7 @@ func (h *PortHandler) UpdatePort(c *fiber.Ctx) error {
 	}
 
 	// Önce mevcut port'u getir
-	port_, err := h.service.GetPort(uint(id))
+	port_, err := h.service.GetPort(c.Context(), uint(id))
 	if err != nil {
 		return errorx.WrapMsg(errorx.ErrNotFound, "Port not found")
 	}
@@ -82,7 +82,7 @@ func (h *PortHandler) UpdatePort(c *fiber.Ctx) error {
 
 	// Sadece gönderilen alanları güncelle
 	req.ToModel(port_)
-	if err = h.service.UpdatePort(port_); err != nil {
+	if err = h.service.UpdatePort(c.Context(), port_); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
@@ -97,7 +97,7 @@ func (h *PortHandler) DeletePort(c *fiber.Ctx) error {
 		return errorx.WrapMsg(errorx.ErrInvalidRequest, "Invalid port ID")
 	}
 
-	if err = h.service.DeletePort(uint(id)); err != nil {
+	if err = h.service.DeletePort(c.Context(), uint(id)); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
