@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"switch-manager/internal/models"
 	"switch-manager/pkg/database"
-	"switch-manager/pkg/models"
 
 	"gorm.io/gorm"
 )
@@ -55,11 +55,6 @@ func (r *SwitchRepository) Update(switch_ *models.Switch) error {
 // Delete deletes a switch by ID
 func (r *SwitchRepository) Delete(id uint) error {
 	return r.db.Delete(&models.Switch{}, id).Error
-}
-
-// UpdateStatus updates switch status
-func (r *SwitchRepository) UpdateStatus(id uint, status string) error {
-	return r.db.Model(&models.Switch{}).Where("id = ?", id).Update("status", status).Error
 }
 
 // UpdateLastSeen updates switch last seen timestamp

@@ -3,8 +3,8 @@ package handler
 import (
 	"strconv"
 	"switch-manager/internal/api/service"
+	"switch-manager/internal/models"
 	"switch-manager/pkg/errorx"
-	"switch-manager/pkg/models"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,17 +19,19 @@ func NewSwitchHandler(service *service.SwitchService) *SwitchHandler {
 
 // CreateSwitch handles switch creation
 func (h *SwitchHandler) CreateSwitch(c *fiber.Ctx) error {
-	var switch_ models.Switch
+	var req models.SwitchCreateRequest
 
-	if err := c.BodyParser(&switch_); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return errorx.WrapErr(errorx.ErrInvalidRequest, err)
 	}
 
-	if err := h.service.CreateSwitch(&switch_); err != nil {
+	switch_ := req.ToModel()
+	if err := h.service.CreateSwitch(switch_); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(switch_)
+	response := models.FromSwitchModel(switch_)
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
 // GetSwitch handles getting a switch by ID
@@ -44,7 +46,8 @@ func (h *SwitchHandler) GetSwitch(c *fiber.Ctx) error {
 		return errorx.WrapMsg(errorx.ErrNotFound, "Switch not found")
 	}
 
-	return c.JSON(switch_)
+	response := models.FromSwitchModel(switch_)
+	return c.JSON(response)
 }
 
 // GetAllSwitches handles getting all switches
@@ -54,9 +57,10 @@ func (h *SwitchHandler) GetAllSwitches(c *fiber.Ctx) error {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
+	response := models.FromSwitchModelList(switches)
 	return c.JSON(fiber.Map{
-		"switches": switches,
-		"count":    len(switches),
+		"switches": response,
+		"count":    len(response),
 	})
 }
 
@@ -67,18 +71,25 @@ func (h *SwitchHandler) UpdateSwitch(c *fiber.Ctx) error {
 		return errorx.WrapMsg(errorx.ErrInvalidRequest, "Invalid switch ID")
 	}
 
-	var switch_ models.Switch
-	if err = c.BodyParser(&switch_); err != nil {
+	// Önce mevcut switch'i getir
+	switch_, err := h.service.GetSwitch(uint(id))
+	if err != nil {
+		return errorx.WrapMsg(errorx.ErrNotFound, "Switch not found")
+	}
+
+	var req models.SwitchUpdateRequest
+	if err = c.BodyParser(&req); err != nil {
 		return errorx.WrapErr(errorx.ErrInvalidRequest, err)
 	}
 
-	switch_.ID = uint(id)
-
-	if err = h.service.UpdateSwitch(&switch_); err != nil {
+	// Sadece gönderilen alanları güncelle
+	req.ToModel(switch_)
+	if err = h.service.UpdateSwitch(switch_); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
-	return c.JSON(switch_)
+	response := models.FromSwitchModel(switch_)
+	return c.JSON(response)
 }
 
 // DeleteSwitch handles switch deletion
@@ -93,29 +104,4 @@ func (h *SwitchHandler) DeleteSwitch(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
-}
-
-// UpdateSwitchStatus handles switch status update
-func (h *SwitchHandler) UpdateSwitchStatus(c *fiber.Ctx) error {
-	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
-	if err != nil {
-		return errorx.WrapMsg(errorx.ErrInvalidRequest, "Invalid switch ID")
-	}
-
-	var req struct {
-		Status string `json:"status"`
-	}
-
-	if err = c.BodyParser(&req); err != nil {
-		return errorx.WrapErr(errorx.ErrInvalidRequest, err)
-	}
-
-	if err = h.service.UpdateSwitchStatus(uint(id), req.Status); err != nil {
-		return errorx.WrapErr(errorx.ErrInternal, err)
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Switch status updated successfully",
-		"status":  req.Status,
-	})
 }

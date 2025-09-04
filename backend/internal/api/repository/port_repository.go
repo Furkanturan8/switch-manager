@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"switch-manager/internal/models"
 	"switch-manager/pkg/database"
-	"switch-manager/pkg/models"
 )
 
 type PortRepository struct {
@@ -21,7 +21,7 @@ func (r *PortRepository) Create(port_ *models.Port) error {
 // GetByID retrieves a port by ID
 func (r *PortRepository) GetByID(id uint) (*models.Port, error) {
 	var port_ models.Port
-	err := r.db.First(&port_, id).Error
+	err := r.db.Preload("Switch").First(&port_, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (r *PortRepository) GetByName(name string) (*models.Port, error) {
 // GetAll retrieves all ports
 func (r *PortRepository) GetAll() ([]models.Port, error) {
 	var ports []models.Port
-	err := r.db.Find(&ports).Error
+	err := r.db.Preload("Switch").Find(&ports).Error
 	return ports, err
 }
 
@@ -53,19 +53,4 @@ func (r *PortRepository) Update(port_ *models.Port) error {
 // Delete deletes a port by ID
 func (r *PortRepository) Delete(id uint) error {
 	return r.db.Delete(&models.Port{}, id).Error
-}
-
-// UpdateAdminStatus updates port admin status
-func (r *PortRepository) UpdateAdminStatus(id uint, status string) error {
-	return r.db.Model(&models.Port{}).Where("id = ?", id).Update("admin_status", status).Error
-}
-
-// UpdateOperStatus updates port operational status
-func (r *PortRepository) UpdateOperStatus(id uint, status string) error {
-	return r.db.Model(&models.Port{}).Where("id = ?", id).Update("oper_status", status).Error
-}
-
-// UpdateStatus updates port status
-func (r *PortRepository) UpdateStatus(id uint, status string) error {
-	return r.db.Model(&models.Port{}).Where("id = ?", id).Update("status", status).Error
 }

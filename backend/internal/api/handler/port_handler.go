@@ -3,8 +3,8 @@ package handler
 import (
 	"strconv"
 	"switch-manager/internal/api/service"
+	"switch-manager/internal/models"
 	"switch-manager/pkg/errorx"
-	"switch-manager/pkg/models"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,16 +18,18 @@ func NewPortHandler(service *service.PortService) *PortHandler {
 }
 
 func (h *PortHandler) CreatePort(c *fiber.Ctx) error {
-	var port_ models.Port
-	if err := c.BodyParser(&port_); err != nil {
+	var req models.PortCreateRequest
+	if err := c.BodyParser(&req); err != nil {
 		return errorx.WrapErr(errorx.ErrInvalidRequest, err)
 	}
 
-	if err := h.service.CreatePort(&port_); err != nil {
+	port_ := req.ToModel()
+	if err := h.service.CreatePort(port_); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(port_)
+	response := models.FromPortModel(port_)
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
 // GetPort handles getting a port by ID
@@ -42,7 +44,8 @@ func (h *PortHandler) GetPort(c *fiber.Ctx) error {
 		return errorx.WrapMsg(errorx.ErrNotFound, "Port not found")
 	}
 
-	return c.JSON(port_)
+	response := models.FromPortModel(port_)
+	return c.JSON(response)
 }
 
 // GetAllPortes handles getting all ports
@@ -52,9 +55,10 @@ func (h *PortHandler) GetAllPortes(c *fiber.Ctx) error {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
+	response := models.FromPortModelList(ports)
 	return c.JSON(fiber.Map{
-		"ports": ports,
-		"count": len(ports),
+		"ports": response,
+		"count": len(response),
 	})
 }
 
@@ -65,18 +69,25 @@ func (h *PortHandler) UpdatePort(c *fiber.Ctx) error {
 		return errorx.WrapMsg(errorx.ErrInvalidRequest, "Invalid port ID")
 	}
 
-	var port_ models.Port
-	if err = c.BodyParser(&port_); err != nil {
+	// Önce mevcut port'u getir
+	port_, err := h.service.GetPort(uint(id))
+	if err != nil {
+		return errorx.WrapMsg(errorx.ErrNotFound, "Port not found")
+	}
+
+	var req models.PortUpdateRequest
+	if err = c.BodyParser(&req); err != nil {
 		return errorx.WrapErr(errorx.ErrInvalidRequest, err)
 	}
 
-	port_.ID = uint(id)
-
-	if err = h.service.UpdatePort(&port_); err != nil {
+	// Sadece gönderilen alanları güncelle
+	req.ToModel(port_)
+	if err = h.service.UpdatePort(port_); err != nil {
 		return errorx.WrapErr(errorx.ErrInternal, err)
 	}
 
-	return c.JSON(port_)
+	response := models.FromPortModel(port_)
+	return c.JSON(response)
 }
 
 // DeletePort handles port deletion
@@ -91,30 +102,4 @@ func (h *PortHandler) DeletePort(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
-}
-
-// UpdatePortStatus handles port status update
-// todo: gerek var mı??
-func (h *PortHandler) UpdatePortStatus(c *fiber.Ctx) error {
-	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
-	if err != nil {
-		return errorx.WrapMsg(errorx.ErrInvalidRequest, "Invalid port ID")
-	}
-
-	var req struct {
-		Status string `json:"status"`
-	}
-
-	if err = c.BodyParser(&req); err != nil {
-		return errorx.WrapErr(errorx.ErrInvalidRequest, err)
-	}
-
-	if err = h.service.UpdatePortStatus(uint(id), req.Status); err != nil {
-		return errorx.WrapErr(errorx.ErrInternal, err)
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Port status updated successfully",
-		"status":  req.Status,
-	})
 }

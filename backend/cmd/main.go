@@ -8,10 +8,10 @@ import (
 	"switch-manager/internal/api/service"
 	"switch-manager/internal/config"
 	"switch-manager/internal/core/monitoring"
+	"switch-manager/internal/models"
 	"switch-manager/pkg/database"
 	"switch-manager/pkg/errorx"
 	"switch-manager/pkg/logger"
-	"switch-manager/pkg/models"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -108,16 +108,14 @@ func setupRoutes(app *fiber.App, db *database.DB) {
 		switches.Get("/:id", switchHandler.GetSwitch)
 		switches.Put("/:id", switchHandler.UpdateSwitch)
 		switches.Delete("/:id", switchHandler.DeleteSwitch)
-		switches.Patch("/:id/status", switchHandler.UpdateSwitchStatus)
 
 		// Port yönetimi (placeholder)
 		ports := api.Group("/ports")
 		ports.Get("/", portHandler.GetAllPortes)
 		ports.Post("/", portHandler.CreatePort)
 		ports.Get("/:id", portHandler.GetPort)
-		ports.Put("/:id", portHandler.UpdatePort)                // Implement if needed
-		ports.Delete("/:id", portHandler.DeletePort)             // Implement if needed
-		ports.Patch("/:id/status", portHandler.UpdatePortStatus) // Implement if needed
+		ports.Put("/:id", portHandler.UpdatePort)
+		ports.Delete("/:id", portHandler.DeletePort)
 
 		// VLAN yönetimi (placeholder)
 		api.Get("/vlans", func(c *fiber.Ctx) error {

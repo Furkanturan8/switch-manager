@@ -2,9 +2,9 @@ package service
 
 import (
 	"switch-manager/internal/api/repository"
+	"switch-manager/internal/models"
 	"switch-manager/pkg/errorx"
 	"switch-manager/pkg/logger"
-	"switch-manager/pkg/models"
 )
 
 type PortService struct {
@@ -91,44 +91,5 @@ func (s *PortService) DeletePort(id uint) error {
 	}
 
 	s.logger.Info("Port deleted successfully:", id)
-	return nil
-}
-
-// UpdatePortAdminStatus updates port admin status
-func (s *PortService) UpdatePortAdminStatus(id uint, status string) error {
-	s.logger.Info("Updating port admin status:", id, "->", status)
-
-	err := s.repo.UpdateAdminStatus(id, status)
-	if err != nil {
-		s.logger.Error("Failed to update port admin status:", err)
-		return err
-	}
-
-	return nil
-}
-
-// UpdatePortOperStatus updates port operational status
-func (s *PortService) UpdatePortOperStatus(id uint, status string) error {
-	s.logger.Info("Updating port operational status:", id, "->", status)
-
-	err := s.repo.UpdateOperStatus(id, status)
-	if err != nil {
-		s.logger.Error("Failed to update port operational status:", err)
-		return err
-	}
-
-	return nil
-}
-
-// UpdatePortStatus updates port status
-func (s *PortService) UpdatePortStatus(id uint, status string) error {
-	s.logger.Info("Updating port status:", id, "->", status)
-
-	err := s.repo.UpdateStatus(id, status)
-	if err != nil {
-		s.logger.Error("Failed to update port status:", err)
-		return err
-	}
-
 	return nil
 }

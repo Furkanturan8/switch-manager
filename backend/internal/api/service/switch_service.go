@@ -2,9 +2,9 @@ package service
 
 import (
 	"switch-manager/internal/api/repository"
+	"switch-manager/internal/models"
 	"switch-manager/pkg/errorx"
 	"switch-manager/pkg/logger"
-	"switch-manager/pkg/models"
 )
 
 type SwitchService struct {
@@ -91,18 +91,5 @@ func (s *SwitchService) DeleteSwitch(id uint) error {
 	}
 
 	s.logger.Info("Switch deleted successfully:", id)
-	return nil
-}
-
-// UpdateSwitchStatus updates switch status
-func (s *SwitchService) UpdateSwitchStatus(id uint, status string) error {
-	s.logger.Info("Updating switch status:", id, "->", status)
-
-	err := s.repo.UpdateStatus(id, status)
-	if err != nil {
-		s.logger.Error("Failed to update switch status:", err)
-		return err
-	}
-
 	return nil
 }
